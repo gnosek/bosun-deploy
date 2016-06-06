@@ -16,6 +16,8 @@ You should get an Ubuntu 14.04 VM with the full Bosun stack installed. Credentia
 
 Nothing should prevent you from running this playbook (bosun.yml) on another infrastructure, but it basically requires Ubuntu 14.04 (or possibly 12.04) running Upstart on amd64.
 
+Bosun is available at http://(domain)/ directly, Grafana is at http://(domain)/grafana/. OpenTSDB is not exposed via nginx but is available on port 4242. Note: if you want to use this in production, you definitely want a firewall around this.
+
 ## Setting up a data source
 
 The [Bosun data source plugin](https://grafana.net/plugins/bosun-datasource) comes preinstalled so you only need to add a data source to Grafana.
