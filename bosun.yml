@@ -1,0 +1,59 @@
+- hosts: all
+  vars:
+    home: "{{ ansible_env.HOME }}"
+    http_domain: "{{ ansible_eth1.ipv4.address }}.xip.io"
+    http_username: bosun
+    http_password: "{{ lookup('password', 'bosun.passwd chars=letters,digits length=8') }}"
+  roles:
+  - role: packages
+    tags: packages
+    become_user: root
+    become: true
+  - role: hbase
+    tags: hbase
+  - role: hadoop
+    tags: hadoop
+  - role: opentsdb
+    tags: opentsdb
+  - role: redis
+    tags: redis
+    become_user: root
+    become: true
+  - role: bosun
+    tags: bosun
+  - role: grafana
+    tags: grafana
+  - role: nginx
+    tags: nginx
+    become_user: root
+    become: true
+  - role: upstart
+    become_user: root
+    become: true
+    services:
+    - name: hbase
+      cwd: "{{ home }}/bosun/hbase/bin"
+      command: "{{ home }}/bosun/hbase/bin/hbase --config {{ home }}/bosun/hbase/conf master start"
+      user: "{{ ansible_user_id }}"
+    - name: opentsdb
+      cwd: "{{ home }}/bosun/opentsdb"
+      command: ./bin/tsdb tsd --staticroot=share/opentsdb/static --cachedir=/tmp/tsdb-cache/ --port=4242 --auto-metric
+      user: "{{ ansible_user_id }}"
+    - name: bosun
+      cwd: "{{ home }}/bosun/bosun"
+      command: ./bosun-linux-amd64 -c=bosun.conf
+      user: "{{ ansible_user_id }}"
+    - name: grafana
+      cwd: "{{ home }}/bosun/grafana"
+      command: bin/grafana-server
+      user: "{{ ansible_user_id }}"
+    tags: upstart
+  tasks:
+  - name: Create OpenTSDB tables
+    command: ./share/opentsdb/tools/create_table.sh chdir={{ home }}/bosun/opentsdb
+    environment:
+      HBASE_HOME: "{{ home }}/bosun/hbase"
+      COMPRESSION: lzo
+    tags: opentsdb-init
+  - debug:
+      msg: "Bosun running at http://{{ http_domain }}/ login: {{ http_username }} password: {{ http_password }}"

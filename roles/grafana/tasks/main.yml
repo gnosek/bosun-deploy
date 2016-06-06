@@ -1,0 +1,47 @@
+- name: Check required variables
+  assert:
+    that: home is defined
+
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - "{{ home }}/downloads"
+  - "{{ home }}/bosun"
+
+- name: Download Grafana
+  get_url:
+    url: "{{ grafana_url }}"
+    dest: "{{ home }}/downloads/{{ grafana_url|basename }}"
+
+- name: Unpack Grafana
+  unarchive:
+    copy: false
+    src: "{{ home }}/downloads/{{ grafana_url|basename }}"
+    dest: "{{ home }}/bosun"
+    exclude:
+    - "{{ grafana_url|basename|replace('.linux-x64.tar.gz', '') }}/vendor/phantomjs/render.js"
+
+- name: Set grafana_dir
+  set_fact:
+    grafana_dir: "{{ home }}/bosun/{{ grafana_url|basename|replace('.linux-x64.tar.gz', '') }}"
+
+- name: Symlink Grafana into place
+  file:
+    path: "{{ home }}/bosun/grafana"
+    state: link
+    src: "{{ grafana_dir }}"
+
+- name: Generate Grafana config
+  template:
+    src: grafana.ini
+    dest: "{{ grafana_dir }}/conf/custom.ini"
+
+- name: Generate Grafana render.js with HTTP auth
+  template:
+    src: render.js
+    dest: "{{ grafana_dir }}/vendor/phantomjs/render.js"
+
+- name: Install Bosun data source plugin
+  command: bin/grafana-cli --pluginsDir data/plugins/ plugins install bosun-datasource chdir={{ grafana_dir }} creates={{ grafana_dir }}/data/plugins/bosun-datasource/

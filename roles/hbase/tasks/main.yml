@@ -1,0 +1,34 @@
+- name: Check required variables
+  assert:
+    that: home is defined
+
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - "{{ home }}/downloads"
+  - "{{ home }}/bosun"
+  - "{{ home }}/bosun/data"
+
+- name: Download HBase
+  get_url:
+    url: "{{ hbase_url }}"
+    dest: "{{ home }}/downloads/{{ hbase_url|basename }}"
+
+- name: Extract HBase binaries
+  command: "tar xzf {{ home }}/downloads/{{ hbase_url|basename }} chdir={{ home }}/bosun creates={{ home }}/bosun/{{ hbase_url|basename|replace('-bin.tar.gz', '') }}"
+
+- name: Symlink HBase into place
+  file:
+    path: "{{ home }}/bosun/hbase"
+    state: link
+    src: "{{ home }}/bosun/{{ hbase_url|basename|replace('-bin.tar.gz', '') }}"
+
+- name: Configure HBase
+  template:
+    src: "{{ item }}"
+    dest: "{{ home }}/bosun/hbase/conf/{{ item }}"
+  with_items:
+  - hbase-site.xml
+  - hbase-env.sh

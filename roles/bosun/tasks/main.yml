@@ -1,0 +1,23 @@
+- name: Check required variables
+  assert:
+    that: home is defined
+
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - "{{ home }}/bosun"
+  - "{{ home }}/bosun/bosun"
+
+- name: Download Bosun binary
+  get_url:
+    url: "{{ bosun_url }}"
+    dest: "{{ home }}/bosun/bosun/{{ bosun_url|basename }}"
+    mode: "755"
+
+- name: Create basic Bosun config
+  template:
+    src: bosun.conf
+    dest: "{{ home }}/bosun/bosun/bosun.conf"
+    force: no

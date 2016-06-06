@@ -1,0 +1,3 @@
+hbase_url: http://ftp.piotrkosoft.net/pub/mirrors/ftp.apache.org/hbase/1.1.5/hbase-1.1.5-bin.tar.gz
+hadoop_lzo_jar: hadoop-lzo-0.4.20-SNAPSHOT.jar
+perm_size: 128m

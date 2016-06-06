@@ -1,0 +1,29 @@
+- name: Install nginx
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - nginx
+  - python-passlib
+
+- name: Generate htpasswd file
+  htpasswd:
+    name: "{{ http_username }}"
+    password: "{{ http_password }}"
+    path: /etc/nginx/bosun.htpasswd
+    create: yes
+
+- name: Remove default nginx config file
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Restart nginx
+
+- name: Generate nginx config file
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/sites-enabled/bosun.conf
+  with_items: "{{ services }}"
+  notify: Restart nginx

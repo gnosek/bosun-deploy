@@ -1,0 +1,10 @@
+<configuration>
+  <property>
+    <name>hbase.rootdir</name>
+    <value>file://{{ home }}/bosun/data/hbase</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.property.dataDir</name>
+    <value>{{ home }}/bosun/data/zookeeper</value>
+  </property>
+</configuration>

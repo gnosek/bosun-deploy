@@ -1,0 +1,38 @@
+- name: Check required variables
+  assert:
+    that: home is defined
+
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - "{{ home }}/downloads"
+  - "{{ home }}/bosun"
+  - "{{ home }}/bosun/src"
+
+- name: Download Hadoop
+  get_url:
+    url: "{{ hadoop_url }}"
+    dest: "{{ home }}/downloads/{{ hadoop_url|basename }}"
+
+- name: Extract Hadoop binaries
+  unarchive:
+    copy: false
+    src: "{{ home }}/downloads/{{ hadoop_url|basename }}"
+    dest: "{{ home }}/bosun"
+
+- name: Symlink Hadoop into place
+  file:
+    path: "{{ home }}/bosun/hadoop"
+    state: link
+    src: "{{ home }}/bosun/{{ hadoop_url|basename|replace('.tar.gz', '') }}"
+
+- name: Download Hadoop-LZO extension
+  git:
+    repo: https://github.com/twitter/hadoop-lzo
+    accept_hostkey: true
+    dest: "{{ home }}/bosun/src/hadoop-lzo"
+
+- name: Build Hadoop-LZO extension
+  command: mvn package chdir={{ home }}/bosun/src/hadoop-lzo creates={{ home }}/bosun/src/hadoop-lzo/target/native/Linux-amd64-64/lib/libgplcompression.so

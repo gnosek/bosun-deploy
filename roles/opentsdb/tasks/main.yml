@@ -1,0 +1,61 @@
+- name: Check required variables
+  assert:
+    that: home is defined
+
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - "{{ home }}/downloads"
+  - "{{ home }}/bosun"
+  - "{{ home }}/bosun/src"
+
+- name: Download OpenTSDB
+  get_url:
+    url: "{{ opentsdb_url }}"
+    dest: "{{ home }}/downloads/{{ opentsdb_url|basename }}"
+
+- name: Extract OpenTSDB
+  unarchive:
+    copy: false
+    src: "{{ home }}/downloads/{{ opentsdb_url|basename }}"
+    dest: "{{ home }}/bosun/src"
+
+- name: Symlink OpenTSDB into place
+  file:
+    path: "{{ home }}/bosun/src/opentsdb"
+    state: link
+    src: "{{ home }}/bosun/src/{{ opentsdb_url|basename|replace('.tar.gz', '') }}"
+    
+- name: Bootstrap OpenTSDB build process
+  command: ./bootstrap chdir={{ home }}/bosun/src/opentsdb creates={{ home }}/bosun/src/opentsdb/configure
+
+- name: Create build directory
+  file:
+    path: "{{ home }}/bosun/src/opentsdb/build"
+    state: directory
+
+- name: ./configure OpenTSDB
+  command: ../configure --prefix={{ home }}/bosun/opentsdb chdir={{ home }}/bosun/src/opentsdb/build creates={{ home }}/bosun/src/opentsdb/build/Makefile
+
+- name: Compile OpenTSDB
+  command: make chdir={{ home }}/bosun/src/opentsdb/build creates={{ home }}/bosun/src/opentsdb/build/tsdb
+
+- name: Install OpenTSDB
+  command: make install chdir={{ home }}/bosun/src/opentsdb/build creates={{ home }}/bosun/opentsdb/bin
+
+- name: Create log directory
+  file:
+    path: "{{ home }}/bosun/opentsdb/log"
+    state: directory
+
+- name: Create log config
+  template:
+    src: logback.xml
+    dest: "{{ home }}/bosun/opentsdb/share/opentsdb/etc/opentsdb/logback.xml"
+
+- name: Create opentsdb config
+  template:
+    src: opentsdb.conf
+    dest: "{{ home }}/bosun/opentsdb/opentsdb.conf"

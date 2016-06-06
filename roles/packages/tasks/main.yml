@@ -1,0 +1,25 @@
+- name: Add webupd8 repo for Java
+  apt_repository:
+    repo: ppa:webupd8team/java
+    update_cache: yes
+
+- name: Accept Oracle license
+  debconf:
+    name: oracle-java7-installer
+    question: shared/accepted-oracle-license-v1-1
+    value: "true"
+    vtype: select
+
+- name: Install required packages
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - oracle-java7-installer
+  - ant
+  - liblzo2-dev
+  - git
+  - maven
+  - autoconf

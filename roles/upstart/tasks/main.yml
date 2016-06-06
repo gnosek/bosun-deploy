@@ -1,0 +1,11 @@
+- name: Generate Upstart configs
+  template:
+    src: service.conf
+    dest: /etc/init/{{ item.name }}.conf
+  with_items: "{{ services }}"
+
+- name: Ensure services are started
+  service:
+    name: "{{ item.name }}"
+    state: started
+  with_items: "{{ services }}"
