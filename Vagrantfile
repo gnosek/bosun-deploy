@@ -70,6 +70,5 @@ Vagrant.configure(2) do |config|
   # SHELL
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "bosun.yml"
-    ansible.raw_arguments = ["-Dvv"]
   end
 end
