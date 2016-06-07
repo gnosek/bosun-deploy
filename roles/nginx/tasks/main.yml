@@ -25,5 +25,4 @@
   template:
     src: nginx.conf
     dest: /etc/nginx/sites-enabled/bosun.conf
-  with_items: "{{ services }}"
   notify: Restart nginx
