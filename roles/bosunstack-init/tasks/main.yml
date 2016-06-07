@@ -1,0 +1,24 @@
+- name: Ensure all services are running
+  meta: flush_handlers
+- name: Create OpenTSDB tables
+  command: ./share/opentsdb/tools/create_table.sh chdir={{ home }}/bosun/opentsdb creates={{ home }}/bosun/data/hbase/data/default/tsdb
+  environment:
+    HBASE_HOME: "{{ home }}/bosun/hbase"
+    COMPRESSION: lzo
+- name: Check Bosun data source
+  uri:
+    url: http://{{ http_domain }}/grafana/api/datasources
+    user: "{{ http_username }}"
+    password: "{{ http_password }}"
+    return_content: true
+  register: grafana_ds
+- name: Create Bosun data source
+  uri:
+    url: http://{{ http_domain }}/grafana/api/datasources
+    method: POST
+    user: "{{ http_username }}"
+    password: "{{ http_password }}"
+    body: "{{ grafana_datasource }}"
+    body_format: json
+  when: grafana_ds.json|length == 0
+  changed_when: true

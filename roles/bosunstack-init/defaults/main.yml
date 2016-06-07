@@ -1,0 +1,1 @@
+grafana_datasource: '{"name":"Bosun","type":"bosun-datasource","url":"http://localhost:10000","access":"proxy","jsonData":{"enableQueryHelper":true},"isDefault":true}'

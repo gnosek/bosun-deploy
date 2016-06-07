@@ -20,8 +20,4 @@ Bosun is available at http://(domain)/ directly, Grafana is at http://(domain)/g
 
 ## Setting up a data source
 
-The [Bosun data source plugin](https://grafana.net/plugins/bosun-datasource) comes preinstalled so you only need to add a data source to Grafana.
-
-Go to http://(domain)/grafana/datasources/new and add a data source with the following configuration:
-
-![Bosun data source](datasource.png)
+The [Bosun data source plugin](https://grafana.net/plugins/bosun-datasource) comes preinstalled and preconfigured as the default data source for Grafana.
