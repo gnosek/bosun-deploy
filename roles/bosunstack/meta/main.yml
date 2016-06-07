@@ -1,0 +1,32 @@
+dependencies:
+- role: opentsdb
+  tags: opentsdb
+- role: bosun
+  tags: bosun
+- role: grafana
+  tags: grafana
+- role: nginx
+  tags: nginx
+  become_user: root
+  become: true
+- role: upstart
+  become_user: root
+  become: true
+  services:
+  - name: hbase
+    cwd: "{{ home }}/bosun/hbase/bin"
+    command: "{{ home }}/bosun/hbase/bin/hbase --config {{ home }}/bosun/hbase/conf master start"
+    user: "{{ ansible_user_id }}"
+  - name: opentsdb
+    cwd: "{{ home }}/bosun/opentsdb"
+    command: ./bin/tsdb tsd --staticroot=share/opentsdb/static --cachedir=/tmp/tsdb-cache/ --port=4242 --auto-metric
+    user: "{{ ansible_user_id }}"
+  - name: bosun
+    cwd: "{{ home }}/bosun/bosun"
+    command: ./bosun-linux-amd64 -c=bosun.conf
+    user: "{{ ansible_user_id }}"
+  - name: grafana
+    cwd: "{{ home }}/bosun/grafana"
+    command: bin/grafana-server
+    user: "{{ ansible_user_id }}"
+  tags: upstart

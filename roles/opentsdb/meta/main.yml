@@ -1,0 +1,7 @@
+dependencies:
+- role: packages
+  tags: packages
+  become_user: root
+  become: true
+- role: hbase
+  tags: hbase

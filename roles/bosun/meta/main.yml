@@ -1,0 +1,5 @@
+dependencies:
+- role: redis
+  tags: redis
+  become_user: root
+  become: true
