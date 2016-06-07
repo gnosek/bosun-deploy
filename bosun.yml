@@ -50,7 +50,7 @@
     tags: upstart
   tasks:
   - name: Create OpenTSDB tables
-    command: ./share/opentsdb/tools/create_table.sh chdir={{ home }}/bosun/opentsdb
+    command: ./share/opentsdb/tools/create_table.sh chdir={{ home }}/bosun/opentsdb creates={{ home }}/bosun/data/hbase/data/default/tsdb
     environment:
       HBASE_HOME: "{{ home }}/bosun/hbase"
       COMPRESSION: lzo
