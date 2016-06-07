@@ -1,0 +1,85 @@
+- hosts: all
+  vars:
+    home: "{{ ansible_env.HOME }}"
+    http_domain: "{{ ansible_eth1.ipv4.address }}.xip.io"
+    http_username: bosun
+    http_password: "{{ lookup('password', '../bosun.passwd chars=letters,digits length=8') }}"
+
+    bosun_query: '{"start":"1h-ago","queries":[{"aggregator":"sum","metric":"bosun.collect.alloc","rate":false,"rateOptions":{},"derivative":"auto","ds":"","dstime":"","tags":{},"gbFilters":{},"nGbFilters":{},"filters":[],"downsample":""}]}'
+    grafana_datasource: '{"name":"Bosun","type":"bosun-datasource","url":"http://localhost:10000","access":"proxy","jsonData":{"enableQueryHelper":true},"isDefault":true}'
+  tasks:
+  - name: Install httplib2
+    apt:
+      update_cache: yes
+      cache_valid_time: 3600
+      name: python-httplib2
+      state: present
+    become: true
+    become_user: root
+
+  - name: Check that Bosun is up
+    uri:
+      url: http://{{ http_domain }}/
+      user: "{{ http_username }}"
+      password: "{{ http_password }}"
+  - name: Check that Bosun requires authentication
+    uri:
+      url: http://{{ http_domain }}/
+      status_code: 401
+  - name: Check that Bosun query returns data
+    uri:
+      url: "http://{{ http_domain }}/api/graph?b64={{ bosun_query|b64encode }}&autods=1140&autorate=0"
+      user: "{{ http_username }}"
+      password: "{{ http_password }}"
+      return_content: true
+    register: bosun_query
+    failed_when: bosun_query.json.Series[0].Data|length == 0
+
+  - name: Check that Grafana is up
+    uri:
+      url: http://{{ http_domain }}/grafana/
+      user: "{{ http_username }}"
+      password: "{{ http_password }}"
+  - name: Check that Grafana requires authentication
+    uri:
+      url: http://{{ http_domain }}/grafana/
+      status_code: 401
+  - name: Check Bosun data source
+    uri:
+      url: http://{{ http_domain }}/grafana/api/datasources
+      user: "{{ http_username }}"
+      password: "{{ http_password }}"
+      return_content: true
+    register: grafana_ds
+  - name: Create Bosun data source
+    uri:
+      url: http://{{ http_domain }}/grafana/api/datasources
+      method: POST
+      user: "{{ http_username }}"
+      password: "{{ http_password }}"
+      body: "{{ grafana_datasource }}"
+      body_format: json
+    when: grafana_ds.json|length == 0
+  - name: Check test dashboard
+    uri:
+      url: http://{{ http_domain }}/grafana/api/search
+      user: "{{ http_username }}"
+      password: "{{ http_password }}"
+      return_content: true
+    register: grafana_dash
+  - name: Create test dashboard
+    uri:
+      url: http://{{ http_domain }}/grafana/api/dashboards/db
+      method: POST
+      user: "{{ http_username }}"
+      password: "{{ http_password }}"
+      body: "{\"dashboard\": {{ lookup('file', 'dashboard.json') }} }"
+      body_format: json
+    when: grafana_dash.json|length == 0
+  - name: Check that panel screenshot returns an image
+    uri:
+      url: "http://{{ http_domain }}/grafana/render/dashboard-solo/db/test-dashboard?panelId=1&width=1000&height=500"
+      user: "{{ http_username }}"
+      password: "{{ http_password }}"
+    register: grafana_screenshot
+    failed_when: grafana_screenshot.content_type != "image/png"
